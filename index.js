@@ -11,7 +11,7 @@ const client = new Client({
     ]
 });
 
-const allowedRoleName = "Admin"; // Change this to the required role name
+const allowedRoleName = "Spelledare"; // Change this to the required role name
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
