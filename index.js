@@ -11,11 +11,21 @@ const client = new Client({
     ]
 });
 
+const allowedRoleName = "Admin"; // Change this to the required role name
+
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on('messageCreate', async (message) => {
+    if (message.author.bot) return; // Ignore bot messages
+
+    // Restrict command usage to users with the allowed role
+    const member = message.guild.members.cache.get(message.author.id);
+    if (!member.roles.cache.some(role => role.name === allowedRoleName)) {
+        return message.reply("❌ You don’t have permission to use this command!");
+    }
+
     if (message.content.startsWith('!poll')) {
         const args = message.content.split(' ').slice(1);
         if (args.length < 3) {
@@ -53,14 +63,18 @@ client.on('messageCreate', async (message) => {
             message.channel.send(`⚠ Role **${roleName}** already exists.`);
         }
 
-        // Set channel permissions for the new role
+        // Set full channel permissions for the new role
         try {
             await textChannel.permissionOverwrites.create(role, {
-                ViewChannel: true, // Allows role to see the channel
-                SendMessages: true, // Allows role to send messages
-                ReadMessageHistory: true // Allows role to read old messages
+                ViewChannel: true,
+                SendMessages: true,
+                ManageMessages: true,
+                ManageChannels: true,
+                ReadMessageHistory: true,
+                AttachFiles: true,
+                EmbedLinks: true,
+                UseApplicationCommands: true
             });
-
             message.channel.send(`🔧 Updated permissions for <#${channelId}> so **${roleName}** can access it.`);
         } catch (error) {
             console.error(error);
@@ -69,7 +83,9 @@ client.on('messageCreate', async (message) => {
 
         // Create the poll message
         const pollMessage = await message.channel.send(
-            `📢 **Poll Started!** React ✅ to get the **${roleName}** role.\n⏳ Poll ends in **${duration} seconds**.\n🔒 Special access to <#${channelId}> will be granted!`
+            `📢 **Poll Started!** React ✅ to get the **${roleName}** role.
+⏳ Poll ends in **${duration} seconds**.
+🔒 Special access to <#${channelId}> will be granted!`
         );
         await pollMessage.react('✅');
 
@@ -98,3 +114,4 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(process.env.TOKEN);
+
