@@ -12,7 +12,7 @@ const client = new Client({
 });
 
 const allowedRoleName = "Spelledare"; // Change this to the required role name
-const commandPrefix = "!Unicorn"; // Set the command prefix
+const commandPrefix = "!Unicorn "; // Set the command prefix
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
