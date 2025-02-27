@@ -11,8 +11,8 @@ const client = new Client({
     ]
 });
 
-const allowedRoleName = "Spelledare"; // Change this to the required role name
-const commandPrefix = "!Unicorn "; // Set the command prefix
+const allowedRoleName = "Admin"; // Change this to the required role name
+const commandPrefix = "!"; // Set the command prefix
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
@@ -27,10 +27,10 @@ client.on('messageCreate', async (message) => {
         return message.reply("❌ You don’t have permission to use this command!");
     }
 
-     if (message.content.startsWith(`${commandPrefix}poll`)) {
+    if (message.content.startsWith(`${commandPrefix}poll`)) {
         const args = message.content.split(' ').slice(1);
         if (args.length < 3) {
-            return message.channel.send('Usage: `poll <role_name> <duration_in_seconds> <channel_id>`');
+            return message.channel.send('Usage: `!poll <role_name> <duration_in_seconds> <channel_id>`');
         }
 
         const roleName = args.slice(0, -2).join(' ');
