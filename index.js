@@ -27,7 +27,7 @@ client.on('messageCreate', async (message) => {
         return message.reply("❌ You don’t have permission to use this command!");
     }
 
-    if (message.content.startsWith('poll')) {
+     if (message.content.startsWith(`${commandPrefix}poll`)) {
         const args = message.content.split(' ').slice(1);
         if (args.length < 3) {
             return message.channel.send('Usage: `poll <role_name> <duration_in_seconds> <channel_id>`');
