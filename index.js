@@ -11,14 +11,15 @@ const client = new Client({
     ]
 });
 
-const allowedRoleName = "Admin"; // Change this to the required role name
+const allowedRoleName = "Spelledare"; // Change this to the required role name
+const commandPrefix = "!Unicorn"; // Set the command prefix
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on('messageCreate', async (message) => {
-    if (message.author.bot) return; // Ignore bot messages
+    if (message.author.bot || !message.content.startsWith(commandPrefix)) return; // Ignore bot messages and those without prefix
 
     // Restrict command usage to users with the allowed role
     const member = message.guild.members.cache.get(message.author.id);
@@ -114,4 +115,3 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(process.env.TOKEN);
-
