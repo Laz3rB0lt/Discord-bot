@@ -9,7 +9,8 @@ const client = new Client({
     ]
 });
 
-const DEFAULT_CATEGORY_ID = '1341408945046294539'; // Your default category ID
+const DEFAULT_CATEGORY_ID = '1341408945046294539'; // Where game channels are first created
+const STARTED_GAMES_CATEGORY_ID = '1342791810849833063'; // Where started games are moved
 
 // Slash command registration
 const commands = [
@@ -27,11 +28,7 @@ const commands = [
         .addSubcommand(subcommand =>
             subcommand
                 .setName('start')
-                .setDescription('Move your game channel to another category')
-                .addStringOption(option =>
-                    option.setName('category_id')
-                        .setDescription('ID of the new category')
-                        .setRequired(true)))
+                .setDescription('Move your game channel to the started games category'))
 ].map(command => command.toJSON());
 
 // Register commands
@@ -74,6 +71,12 @@ client.on('interactionCreate', async interaction => {
                     ]
                 });
 
+                // Store channel creator in permissions
+                await newChannel.permissionOverwrites.create(interaction.user, {
+                    ViewChannel: true,
+                    ManageChannels: true
+                });
+
                 await interaction.reply(`✅ Created channel: <#${newChannel.id}>`);
             } catch (error) {
                 console.error(error);
@@ -82,25 +85,23 @@ client.on('interactionCreate', async interaction => {
         }
 
         if (interaction.options.getSubcommand() === 'start') {
-            const newCategoryId = options.getString('category_id');
-            const member = interaction.member;
+            const channel = interaction.channel;
+
+            // Check if the channel is in the correct category
+            if (channel.parentId !== DEFAULT_CATEGORY_ID) {
+                return interaction.reply({ content: '❌ You can only start a game in a channel created with `/game create`.', ephemeral: true });
+            }
+
+            // Check if the user is the creator (has special perms)
+            const permissions = channel.permissionOverwrites.cache.get(interaction.user.id);
+            if (!permissions || !permissions.allow.has(PermissionsBitField.Flags.ManageChannels)) {
+                return interaction.reply({ content: '❌ You are not the creator of this channel.', ephemeral: true });
+            }
 
             try {
-                // Find the first text channel the user owns
-                const userChannels = interaction.guild.channels.cache.filter(channel =>
-                    channel.type === ChannelType.GuildText && channel.permissionOverwrites.cache.has(member.id)
-                );
-
-                if (userChannels.size === 0) {
-                    return interaction.reply({ content: '❌ You do not own any game channels.', ephemeral: true });
-                }
-
-                const gameChannel = userChannels.first();
-
-                // Move the channel to the new category
-                await gameChannel.setParent(newCategoryId);
-
-                await interaction.reply(`✅ Moved <#${gameChannel.id}> to <#${newCategoryId}>`);
+                // Move the channel to the started games category
+                await channel.setParent(STARTED_GAMES_CATEGORY_ID);
+                await interaction.reply(`✅ **Game started!** <#${channel.id}> has been moved to the started games category.`);
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
