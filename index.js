@@ -12,36 +12,6 @@ const client = new Client({
 const DEFAULT_CATEGORY_ID = '1341408945046294539'; // Where game channels are first created
 const STARTED_GAMES_CATEGORY_ID = '1342791810849833063'; // Where started games are moved
 
-// Slash command registration
-const commands = [
-    new SlashCommandBuilder()
-        .setName('game')
-        .setDescription('Manage game channels')
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('create')
-                .setDescription('Create a new game channel')
-                .addStringOption(option =>
-                    option.setName('channel_name')
-                        .setDescription('Name of the new channel')
-                        .setRequired(true)))
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('start')
-                .setDescription('Move your game channel to the started games category'))
-].map(command => command.toJSON());
-
-// Register commands
-const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-(async () => {
-    try {
-        console.log('Registering slash commands...');
-        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commands });
-        console.log('✅ Slash commands registered successfully!');
-    } catch (error) {
-        console.error('Failed to register commands:', error);
-    }
-})();
 
 // Command handling
 client.on('interactionCreate', async interaction => {
