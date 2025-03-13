@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -11,36 +11,20 @@ const client = new Client({
     ]
 });
 
-client.once('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}`);
+client.once('ready', () => {
+    console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-client.on('messageCreate', async (message) => {
-    if (message.author.bot || !message.content.startsWith(commandPrefix)) return; // Ignore bot messages and those without prefix
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
 
-    // Restrict command usage to users with the allowed role
-    const member = message.guild.members.cache.get(message.author.id);
-    if (!member.roles.cache.some(role => role.name === allowedRoleName)) {
-        return message.reply("❌ You don’t have permission to use this command!");
-    }
+    if (interaction.commandName === 'poll') {
+        const roleName = interaction.options.getString('role');
+        const duration = interaction.options.getInteger('duration');
+        const textChannel = interaction.options.getChannel('channel');
 
-    if (message.content.startsWith(`${commandPrefix}poll`)) {
-        const args = message.content.split(' ').slice(1);
-        if (args.length < 3) {
-            return message.channel.send('Usage: `!poll <role_name> <duration_in_seconds> <channel_id>`');
-        }
-
-        const roleName = args.slice(0, -2).join(' ');
-        const duration = parseInt(args[args.length - 2]);
-        const channelId = args[args.length - 1];
-
-        if (isNaN(duration) || duration <= 0) {
-            return message.channel.send('⏳ Please provide a valid poll duration in seconds.');
-        }
-
-        const textChannel = message.guild.channels.cache.get(channelId);
-        if (!textChannel) {
-            return message.channel.send('❌ Invalid channel ID. Make sure the bot has access.');
+        if (!textChannel || !textChannel.isTextBased()) {
+            return interaction.reply('❌ Please select a valid text channel.');
         }
 
         let role = interaction.guild.roles.cache.find(r => r.name === roleName);
