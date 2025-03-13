@@ -28,17 +28,7 @@ client.on('interactionCreate', async interaction => {
                 const newChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
-                    parent: DEFAULT_CATEGORY_ID,
-                    permissionOverwrites: [
-                        {
-                            id: interaction.guild.id, // @everyone
-                            deny: [PermissionsBitField.Flags.ViewChannel], // Hide channel
-                        },
-                        {
-                            id: interaction.user.id, // Creator
-                            allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ManageChannels], // Allow access
-                        }
-                    ]
+                    parent: DEFAULT_CATEGORY_ID
                 });
 
                 // Store channel creator in permissions
