@@ -1,87 +1,116 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes, ChannelType, PermissionsBitField } = require('discord.js');
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMessageReactions
     ]
 });
 
-client.once('ready', () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-});
+const DEFAULT_CATEGORY_ID = '1341408945046294539'; // Your default category ID
 
+// Slash command registration
+const commands = [
+    new SlashCommandBuilder()
+        .setName('game')
+        .setDescription('Manage game channels')
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('create')
+                .setDescription('Create a new game channel')
+                .addStringOption(option =>
+                    option.setName('channel_name')
+                        .setDescription('Name of the new channel')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('start')
+                .setDescription('Move your game channel to another category')
+                .addStringOption(option =>
+                    option.setName('category_id')
+                        .setDescription('ID of the new category')
+                        .setRequired(true)))
+].map(command => command.toJSON());
+
+// Register commands
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+(async () => {
+    try {
+        console.log('Registering slash commands...');
+        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commands });
+        console.log('✅ Slash commands registered successfully!');
+    } catch (error) {
+        console.error('Failed to register commands:', error);
+    }
+})();
+
+// Command handling
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
-    if (interaction.commandName === 'poll') {
-        const roleName = interaction.options.getString('role');
-        const duration = interaction.options.getInteger('duration');
-        const textChannel = interaction.options.getChannel('channel');
+    const { commandName, options } = interaction;
 
-        if (!textChannel || !textChannel.isTextBased()) {
-            return interaction.reply('❌ Please select a valid text channel.');
-        }
+    if (commandName === 'game') {
+        if (interaction.options.getSubcommand() === 'create') {
+            const channelName = options.getString('channel_name');
 
-        let role = interaction.guild.roles.cache.find(r => r.name === roleName);
-        if (!role) {
             try {
-                role = await interaction.guild.roles.create({
-                    name: roleName,
-                    color: 'FF9FF9',
-                    permissions: []
+                // Create a new text channel under the default category
+                const newChannel = await interaction.guild.channels.create({
+                    name: channelName,
+                    type: ChannelType.GuildText,
+                    parent: DEFAULT_CATEGORY_ID,
+                    permissionOverwrites: [
+                        {
+                            id: interaction.guild.id, // @everyone
+                            deny: [PermissionsBitField.Flags.ViewChannel], // Hide channel
+                        },
+                        {
+                            id: interaction.user.id, // Creator
+                            allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ManageChannels], // Allow access
+                        }
+                    ]
                 });
-                await interaction.reply(`✅ Created role: **${roleName}**`);
+
+                await interaction.reply(`✅ Created channel: <#${newChannel.id}>`);
             } catch (error) {
                 console.error(error);
-                return interaction.reply('❌ Failed to create role.');
+                await interaction.reply({ content: '❌ Failed to create the channel.', ephemeral: true });
             }
-        } else {
-            await interaction.reply(`⚠ Role **${roleName}** already exists.`);
         }
 
-        try {
-            await textChannel.permissionOverwrites.create(role, {
-                ViewChannel: true,
-                SendMessages: true,
-                ReadMessageHistory: true
-            });
+        if (interaction.options.getSubcommand() === 'start') {
+            const newCategoryId = options.getString('category_id');
+            const member = interaction.member;
 
-            await interaction.followUp(`🔧 Updated permissions for <#${textChannel.id}> so **${roleName}** can access it.`);
-        } catch (error) {
-            console.error(error);
-            return interaction.followUp('❌ Failed to update channel permissions.');
+            try {
+                // Find the first text channel the user owns
+                const userChannels = interaction.guild.channels.cache.filter(channel =>
+                    channel.type === ChannelType.GuildText && channel.permissionOverwrites.cache.has(member.id)
+                );
+
+                if (userChannels.size === 0) {
+                    return interaction.reply({ content: '❌ You do not own any game channels.', ephemeral: true });
+                }
+
+                const gameChannel = userChannels.first();
+
+                // Move the channel to the new category
+                await gameChannel.setParent(newCategoryId);
+
+                await interaction.reply(`✅ Moved <#${gameChannel.id}> to <#${newCategoryId}>`);
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
+            }
         }
-
-        const pollMessage = await interaction.followUp(
-            `📢 **Poll Started!** React ✅ to get the **${roleName}** role.\n⏳ Poll ends in **${duration} seconds**.\n🔒 Special access to <#${textChannel.id}> will be granted!`
-        );
-        await pollMessage.react('✅');
-
-        const filter = (reaction, user) => reaction.emoji.name === '✅' && !user.bot;
-        const collector = pollMessage.createReactionCollector({ filter, dispose: true, time: duration * 1000 });
-
-        collector.on('collect', async (reaction, user) => {
-            const member = await interaction.guild.members.fetch(user.id);
-            await member.roles.add(role);
-            user.send(`✅ You have been given the **${roleName}** role. You can now access <#${textChannel.id}>.`);
-        });
-
-        collector.on('remove', async (reaction, user) => {
-            const member = await interaction.guild.members.fetch(user.id);
-            await member.roles.remove(role);
-            user.send(`❌ The **${roleName}** role has been removed. You can no longer access <#${textChannel.id}>.`);
-        });
-
-        collector.on('end', () => {
-            pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
-            pollMessage.reactions.removeAll().catch(console.error);
-        });
     }
+});
+
+client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.login(process.env.TOKEN);
