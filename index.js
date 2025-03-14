@@ -17,22 +17,20 @@ const STARTED_GAMES_CATEGORY_ID = '1342791810849833063'; // Where started games 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
-    const { commandName, options } = interaction;
+    const { commandName, options, member, guild, channel } = interaction;
 
     if (commandName === 'game') {
         if (interaction.options.getSubcommand() === 'create') {
             const channelName = options.getString('channel_name');
 
             try {
-                // Create a new text channel under the default category
-                const newChannel = await interaction.guild.channels.create({
+                const newChannel = await guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
                     parent: DEFAULT_CATEGORY_ID
                 });
 
-                // Store channel creator in permissions
-                await newChannel.permissionOverwrites.create(interaction.user, {
+                await newChannel.permissionOverwrites.create(member.id, {
                     ViewChannel: true,
                     ManageChannels: true
                 });
@@ -45,42 +43,38 @@ client.on('interactionCreate', async interaction => {
         }
 
         if (interaction.options.getSubcommand() === 'start') {
-            const channel = interaction.channel;
-
-            // Check if the channel is in the correct category
             if (channel.parentId !== DEFAULT_CATEGORY_ID) {
                 return interaction.reply({ content: '❌ You can only start a game in a channel created with `/game create`.', ephemeral: true });
             }
 
-            // Check if the user is the creator (has special perms)
-            const permissions = channel.permissionOverwrites.cache.get(interaction.user.id);
+            const permissions = channel.permissionOverwrites.cache.get(member.id);
             if (!permissions || !permissions.allow.has(PermissionsBitField.Flags.ManageChannels)) {
                 return interaction.reply({ content: '❌ You are not the creator of this channel.', ephemeral: true });
             }
 
             try {
-                // Move the channel to the started games category
                 await channel.setParent(STARTED_GAMES_CATEGORY_ID);
-                await interaction.reply(`✅ **Game started!** <#${channel.id}> has been moved to the started games category.`);
+                await interaction.reply(`✅ **Game started!** <#${channel.id}> has been moved.`);
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
             }
         }
     }
-    if (interaction.commandName === 'poll') {
-        const roleName = interaction.options.getString('role');
-        const duration = interaction.options.getInteger('duration');
-        const textChannel = interaction.options.getChannel('channel');
+
+    if (commandName === 'poll') {
+        const roleName = options.getString('role');
+        const duration = options.getInteger('duration');
+        const textChannel = options.getChannel('channel');
 
         if (!textChannel || !textChannel.isTextBased()) {
             return interaction.reply('❌ Please select a valid text channel.');
         }
 
-        let role = interaction.guild.roles.cache.find(r => r.name === roleName);
+        let role = guild.roles.cache.find(r => r.name === roleName);
         if (!role) {
             try {
-                role = await interaction.guild.roles.create({
+                role = await guild.roles.create({
                     name: roleName,
                     color: 'FF9FF9',
                     permissions: []
@@ -116,13 +110,13 @@ client.on('interactionCreate', async interaction => {
         const collector = pollMessage.createReactionCollector({ filter, dispose: true, time: duration * 1000 });
 
         collector.on('collect', async (reaction, user) => {
-            const member = await interaction.guild.members.fetch(user.id);
+            const member = await guild.members.fetch(user.id);
             await member.roles.add(role);
             user.send(`✅ You have been given the **${roleName}** role. You can now access <#${textChannel.id}>.`);
         });
 
         collector.on('remove', async (reaction, user) => {
-            const member = await interaction.guild.members.fetch(user.id);
+            const member = await guild.members.fetch(user.id);
             await member.roles.remove(role);
             user.send(`❌ The **${roleName}** role has been removed. You can no longer access <#${textChannel.id}>.`);
         });
@@ -134,8 +128,10 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// Bot Ready
 client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}`);
+    console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
+// Login Bot
 client.login(process.env.TOKEN);
