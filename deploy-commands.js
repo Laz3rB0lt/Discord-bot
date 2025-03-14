@@ -17,26 +17,38 @@ const commands = [
             option.setName('channel')
                 .setDescription('Channel where the role will be used')
                 .setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('game')
-        .setDescription('Manage game channels')
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('create')
-                .setDescription('Create a new game channel')
-                .addStringOption(option =>
-                    option.setName('channel_name')
-                        .setDescription('Name of the new channel')
-                        .setRequired(true)))
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('start')
-                .setDescription('Move your game channel to another category')
-                .addStringOption(option =>
-                    option.setName('category_id')
-                        .setDescription('ID of the new category')
-                        .setRequired(true)))
-].map(command => command.toJSON());
+                new SlashCommandBuilder()
+                .setName('game')
+                .setDescription('Manage game channels')
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('create')
+                        .setDescription('Create a new game channel')
+                        .addStringOption(option =>
+                            option.setName('channel_name')
+                                .setDescription('Name of the new channel')
+                                .setRequired(true)))
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('start')
+                        .setDescription('Move your game channel to another category')
+                        .addStringOption(option =>
+                            option.setName('category_id')
+                                .setDescription('ID of the new category')
+                                .setRequired(true)))
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('end')
+                        .setDescription('Delete your game channel'))
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('setrole')
+                        .setDescription('Set the role required to use the bot')
+                        .addStringOption(option =>
+                            option.setName('role_id')
+                                .setDescription('The new manager role ID')
+                                .setRequired(true)))
+        ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
