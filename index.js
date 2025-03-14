@@ -19,8 +19,13 @@ client.on('interactionCreate', async interaction => {
 
     const { commandName, options, member, guild, channel } = interaction;
 
+    // Role requirement check
+    if (requiredRoleId && !member.roles.cache.has(requiredRoleId)) {
+        return interaction.reply({ content: '❌ You do not have permission to use this command.', ephemeral: true });
+    }
+
     if (commandName === 'game') {
-        if (interaction.options.getSubcommand() === 'create') {
+        if (options.getSubcommand() === 'create') {
             const channelName = options.getString('channel_name');
 
             try {
@@ -42,7 +47,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        if (interaction.options.getSubcommand() === 'start') {
+        if (options.getSubcommand() === 'start') {
             if (channel.parentId !== DEFAULT_CATEGORY_ID) {
                 return interaction.reply({ content: '❌ You can only start a game in a channel created with `/game create`.', ephemeral: true });
             }
@@ -60,6 +65,31 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
             }
         }
+
+        if (options.getSubcommand() === 'end') {
+            if (channel.parentId !== STARTED_GAMES_CATEGORY_ID) {
+                return interaction.reply({ content: '❌ This command can only be used in a started game channel.', ephemeral: true });
+            }
+
+            const permissions = channel.permissionOverwrites.cache.get(member.id);
+            if (!permissions || !permissions.allow.has(PermissionsBitField.Flags.ManageChannels)) {
+                return interaction.reply({ content: '❌ You are not the creator of this channel.', ephemeral: true });
+            }
+
+            try {
+                await channel.delete();
+                await interaction.reply(`✅ **Game ended!** The channel has been deleted.`);
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ Failed to delete the channel.', ephemeral: true });
+            }
+        }
+    }
+
+    if (commandName === 'setrole') {
+        const role = options.getRole('role');
+        requiredRoleId = role.id;
+        await interaction.reply(`✅ The required role to use bot commands is now **${role.name}**.`);
     }
 
     if (commandName === 'poll') {
