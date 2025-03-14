@@ -55,18 +55,14 @@ client.on('interactionCreate', async interaction => {
                 return interaction.reply({ content: '❌ You can only start a game in a channel created with `/game create`.', ephemeral: true });
             }
         
-            const permissions = channel.permissionOverwrites.cache.get(member.id);
-            if (!permissions || !permissions.allow.has(PermissionsBitField.Flags.ManageChannels)) {
-                return interaction.reply({ content: '❌ You are not the creator of this channel.', ephemeral: true });
-            }
-        
             try {
-                await channel.setParent(STARTED_GAMES_CATEGORY_ID, { lockPermissions: false }); // Prevents overwriting permissions
+                await channel.setParent(STARTED_GAMES_CATEGORY_ID, { lockPermissions: false });
         
-                // Reapply creator's permissions
+                // Ensure the creator keeps full permissions
                 await channel.permissionOverwrites.create(member.id, {
                     ViewChannel: true,
                     ManageChannels: true,
+                    ManageMessages: true,
                     SendMessages: true,
                     ReadMessageHistory: true
                 });
@@ -77,6 +73,7 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
             }
         }
+        
         
         if (options.getSubcommand() === 'end') {
             if (channel.parentId !== STARTED_GAMES_CATEGORY_ID) {
@@ -160,7 +157,7 @@ client.on('interactionCreate', async interaction => {
     
         collector.on('collect', async (reaction, user) => {
             try {
-                const member = await interaction.guild.members.fetch(user.id);
+                const member = await reaction.message.guild.members.fetch(user.id);
                 if (!member.roles.cache.has(role.id)) {
                     await member.roles.add(role);
                     await user.send(`✅ You have been given the **${roleName}** role. You can now access <#${textChannel.id}>.`);
@@ -169,14 +166,14 @@ client.on('interactionCreate', async interaction => {
                 console.error(`❌ Failed to assign role: ${error}`);
             }
         });
+        
     
         collector.on('end', async () => {
             await pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
             await pollMessage.reactions.removeAll().catch(console.error);
         });
     }
-    
-
+});
 // Bot Ready
 client.once('ready', () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
