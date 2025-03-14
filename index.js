@@ -11,7 +11,10 @@ const client = new Client({
 
 const DEFAULT_CATEGORY_ID = '1341408945046294539'; // Where game channels are first created
 const STARTED_GAMES_CATEGORY_ID = '1342791810849833063'; // Where started games are moved
+const ENDED_GAMES_CATEGORY_ID = '1342791884585701469'; // Where ended games are moved
 
+// Dynamic role requirement for commands
+let requiredRoleId = null;
 
 // Command handling
 client.on('interactionCreate', async interaction => {
@@ -77,7 +80,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             try {
-                await channel.delete();
+                await channel.setParent(ENDED_GAMES_CATEGORY_ID);
                 await interaction.reply(`✅ **Game ended!** The channel has been deleted.`);
             } catch (error) {
                 console.error(error);

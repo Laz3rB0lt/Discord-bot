@@ -3,49 +3,42 @@ const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 
 const commands = [
     new SlashCommandBuilder()
-        .setName('poll')
-        .setDescription('Create a poll to assign roles')
-        .addStringOption(option =>
-            option.setName('role')
-                .setDescription('Name of the role to assign')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('duration')
-                .setDescription('Duration of the poll in seconds')
-                .setRequired(true))
-        .addChannelOption(option =>
-            option.setName('channel')
-                .setDescription('Channel where the role will be used')
-                .setRequired(true)),
-    new SlashCommandBuilder()
         .setName('game')
         .setDescription('Manage game channels')
         .addSubcommand(subcommand =>
-            subcommand
-                .setName('create')
+            subcommand.setName('create')
                 .setDescription('Create a new game channel')
                 .addStringOption(option =>
                     option.setName('channel_name')
                         .setDescription('Name of the new channel')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
-            subcommand
-                .setName('start')
-                .setDescription('Move your game channel to another category')
-                .addStringOption(option =>
-                    option.setName('category_id')
-                        .setDescription('ID of the new category')
-                        .setRequired(true)))
+            subcommand.setName('start')
+                .setDescription('Move your game channel to the started games category'))
         .addSubcommand(subcommand =>
-            subcommand
-                .setName('end')
-                .setDescription('Delete your game channel')),
+            subcommand.setName('end')
+                .setDescription('Delete the game channel')),
+    new SlashCommandBuilder()
+        .setName('poll')
+        .setDescription('Create a role-based poll')
+        .addStringOption(option =>
+            option.setName('role')
+                .setDescription('The role name for the poll')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('duration')
+                .setDescription('Poll duration in seconds')
+                .setRequired(true))
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('The text channel for the poll')
+                .setRequired(true)),
     new SlashCommandBuilder()
         .setName('setrole')
-        .setDescription('Set the role required to use the bot')
-        .addStringOption(option =>
-            option.setName('role_id')
-                .setDescription('The new manager role ID')
+        .setDescription('Set the required role to use bot commands')
+        .addRoleOption(option =>
+            option.setName('role')
+                .setDescription('The role that can use bot commands')
                 .setRequired(true))
 ].map(command => command.toJSON());
 
