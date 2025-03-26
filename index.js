@@ -126,7 +126,7 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply(`✅ Created role: **${roleName}**`);
             } catch (error) {
                 console.error(error);
-                return interaction.reply('❌ Failed to create role.');
+                return interaction.reply({ content: '❌ Failed to create role.', ephemeral: true });
             }
         } else {
             await interaction.reply(`⚠ Role **${roleName}** already exists.`);
@@ -157,22 +157,21 @@ client.on('interactionCreate', async interaction => {
     
         collector.on('collect', async (reaction, user) => {
             try {
-                const member = await reaction.message.guild.members.fetch(user.id);
-                if (!member.roles.cache.has(role.id)) {
-                    await member.roles.add(role);
+                const guildMember = await interaction.guild.members.fetch(user.id);
+                if (!guildMember.roles.cache.has(role.id)) {
+                    await guildMember.roles.add(role);
                     await user.send(`✅ You have been given the **${roleName}** role. You can now access <#${textChannel.id}>.`);
                 }
             } catch (error) {
                 console.error(`❌ Failed to assign role: ${error}`);
             }
         });
-        
     
         collector.on('end', async () => {
             await pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
             await pollMessage.reactions.removeAll().catch(console.error);
         });
-    }
+    }    
 });
 // Bot Ready
 client.once('ready', () => {
