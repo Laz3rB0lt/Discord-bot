@@ -44,6 +44,7 @@ client.on('interactionCreate', async interaction => {
                 });
 
                 await interaction.reply(`✅ Created channel: <#${newChannel.id}>`);
+                console.log('game created');
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to create the channel.', ephemeral: true });
@@ -68,6 +69,7 @@ client.on('interactionCreate', async interaction => {
                 });
         
                 await interaction.reply(`✅ **Game started!** <#${channel.id}> has been moved.`);
+                console.log('game started');
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
@@ -92,6 +94,7 @@ client.on('interactionCreate', async interaction => {
         
                 await channel.setParent(ENDED_GAMES_CATEGORY_ID);
                 await interaction.reply(`✅ **Game ended!** The channel has been archived in <#${ENDED_GAMES_CATEGORY_ID}>.`);
+                console.log('ended game');
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to move the channel.', ephemeral: true });
@@ -104,6 +107,7 @@ client.on('interactionCreate', async interaction => {
         const role = options.getRole('role');
         requiredRoleId = role.id;
         await interaction.reply(`✅ The required role to use bot commands is now **${role.name}**.`);
+        console.log(`Masterrole is now **${role.name}$**`);
     }
 
     if (commandName === 'poll') {
@@ -124,12 +128,14 @@ client.on('interactionCreate', async interaction => {
                     permissions: []
                 });
                 await interaction.reply(`✅ Created role: **${roleName}**`);
+                console.log(`role **${roleName}** created`);
             } catch (error) {
                 console.error(error);
                 return interaction.reply({ content: '❌ Failed to create role.', ephemeral: true });
             }
         } else {
             await interaction.reply(`⚠ Role **${roleName}** already exists.`);
+            console.log(`role already exist`);
         }
     
         try {
@@ -140,6 +146,7 @@ client.on('interactionCreate', async interaction => {
             });
     
             await interaction.followUp(`🔧 Updated permissions for <#${textChannel.id}> so **${roleName}** can access it.`);
+            console.log(`perms updated`)
         } catch (error) {
             console.error(error);
             return interaction.followUp('❌ Failed to update channel permissions.');
@@ -150,7 +157,7 @@ client.on('interactionCreate', async interaction => {
             `📢 **Poll Started!** React ✅ to get the **${roleName}** role.\n⏳ Poll ends in **${duration} seconds**.\n🔒 Special access to <#${textChannel.id}> will be granted!`
         );
         await pollMessage.react('✅');
-    
+        console.log('poll made');
         // Reaction collector setup
         const filter = (reaction, user) => reaction.emoji.name === '✅' && !user.bot;
         const collector = pollMessage.createReactionCollector({ filter, time: duration * 1000 });
@@ -171,6 +178,7 @@ client.on('interactionCreate', async interaction => {
         collector.on('end', async () => {
             await pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
             await pollMessage.reactions.removeAll().catch(console.error);
+            console.log('end');
         });
     }    
 });
