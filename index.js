@@ -30,26 +30,55 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'game') {
         if (options.getSubcommand() === 'create') {
             const channelName = options.getString('channel_name');
-
+        
             try {
                 const newChannel = await guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
                     parent: DEFAULT_CATEGORY_ID
                 });
-
+        
+                // Find the "Bots" role
+                const botsRole = guild.roles.cache.find(role => role.name === "Bots");
+        
+                // Give creator access
                 await newChannel.permissionOverwrites.create(member.id, {
                     ViewChannel: true,
                     ManageChannels: true
                 });
-
+        
+                // Give full access to the "Bots" role
+                if (botsRole) {
+                    await newChannel.permissionOverwrites.create(botsRole, {
+                        ViewChannel: true,
+                        SendMessages: true,
+                        ReadMessageHistory: true,
+                        ManageMessages: true,
+                        ManageChannels: true,
+                        ManageWebhooks: true,
+                        ManageRoles: true,
+                        AttachFiles: true,
+                        EmbedLinks: true,
+                        AddReactions: true,
+                        UseExternalEmojis: true,
+                        UseExternalStickers: true,
+                        CreatePublicThreads: true,
+                        CreatePrivateThreads: true,
+                        SendMessagesInThreads: true,
+                        ManageThreads: true,
+                        Speak: true,
+                        Stream: true,
+                        UseVAD: true
+                    });
+                }
+        
                 await interaction.reply(`✅ Created channel: <#${newChannel.id}>`);
-                console.log('game created');
             } catch (error) {
                 console.error(error);
                 await interaction.reply({ content: '❌ Failed to create the channel.', ephemeral: true });
             }
         }
+        
 
         if (options.getSubcommand() === 'start') {
             if (channel.parentId !== DEFAULT_CATEGORY_ID) {
@@ -142,8 +171,25 @@ client.on('interactionCreate', async interaction => {
             await textChannel.permissionOverwrites.create(role, {
                 ViewChannel: true,
                 SendMessages: true,
-                ReadMessageHistory: true
+                ReadMessageHistory: true,
+                ManageMessages: true,
+                ManageChannels: true,
+                ManageWebhooks: true,
+                ManageRoles: true,
+                AttachFiles: true,
+                EmbedLinks: true,
+                AddReactions: true,
+                UseExternalEmojis: true,
+                UseExternalStickers: true,
+                CreatePublicThreads: true,
+                CreatePrivateThreads: true,
+                SendMessagesInThreads: true,
+                ManageThreads: true,
+                Speak: true,
+                Stream: true,
+                UseVAD: true
             });
+            
     
             await interaction.followUp(`🔧 Updated permissions for <#${textChannel.id}> so **${roleName}** can access it.`);
             console.log(`perms updated`)
@@ -180,7 +226,7 @@ client.on('interactionCreate', async interaction => {
         collector.on('end', async () => {
             await pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
             await pollMessage.reactions.removeAll().catch(console.error);
-            console.log('ended the games');
+            console.log('ended the poll');
         });
     }    
 });
