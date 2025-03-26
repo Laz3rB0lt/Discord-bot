@@ -160,6 +160,7 @@ client.on('interactionCreate', async interaction => {
                 const guildMember = await interaction.guild.members.fetch(user.id);
                 if (!guildMember.roles.cache.has(role.id)) {
                     await guildMember.roles.add(role);
+                    console.log('bot add')
                     await user.send(`✅ You have been given the **${roleName}** role. You can now access <#${textChannel.id}>.`);
                 }
             } catch (error) {
