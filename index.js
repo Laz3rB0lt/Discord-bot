@@ -4,8 +4,11 @@ const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes, ChannelTyp
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.DirectMessages,
     ]
 });
 
