@@ -163,8 +163,10 @@ client.on('interactionCreate', async interaction => {
         const collector = pollMessage.createReactionCollector({ filter, time: duration * 1000 });
     
         collector.on('collect', async (reaction, user) => {
+            console.log(`user ${user.tag}`);
             try {
                 const guildMember = await interaction.guild.members.fetch(user.id);
+                console.log(`🔍 Fetched member: ${member.user.tag}`);
                 if (!guildMember.roles.cache.has(role.id)) {
                     await guildMember.roles.add(role);
                     console.log('bot add')
@@ -178,7 +180,7 @@ client.on('interactionCreate', async interaction => {
         collector.on('end', async () => {
             await pollMessage.edit(`📢 **Poll Closed!** No more reactions will be counted.`);
             await pollMessage.reactions.removeAll().catch(console.error);
-            console.log('end');
+            console.log('ended the games');
         });
     }    
 });
